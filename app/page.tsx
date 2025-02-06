@@ -3,10 +3,7 @@ import { Suspense, useEffect, useState } from "react";
 import { useForm, UseFormSetValue } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { QRCodeSVG } from "qrcode.react";
-import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Form,
   FormControl,
@@ -16,13 +13,12 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import Link from "next/link";
 import { addEntry } from "@/lib/actions";
 import { formatPhoneNumber } from "@/lib/utils";
 import Image from "next/image";
 import HeaderImage from "../public/unknown.png";
-// import { toast } from "sonner";
 import SonnerNotification from "@/components/sonner-notification";
+import QRCodeSection from "@/components/qr-code-section";
 
 const PRICES = {
   cheeseRoll: 4.0,
@@ -43,8 +39,6 @@ const formSchema = z.object({
 });
 
 export default function OrderForm() {
-  const router = useRouter();
-  // const searchParams = useSearchParams();
   const [total, setTotal] = useState(0);
   const [venmoUrl, setVenmoUrl] = useState("");
   const [showQR, setShowQR] = useState(false);
@@ -77,30 +71,14 @@ export default function OrderForm() {
     setTotal(calculateTotal());
   }, [watchValues]);
 
-  // useEffect(() => {
-  //   const successMessage = searchParams.get("success");
-  //   const errorMessage = searchParams.get("error");
-  //   console.log(successMessage);
-  //   console.log(errorMessage);
-  //   if (successMessage) {
-  //     toast.success("Thank you! We received your order.", {
-  //       description: successMessage,
-  //       duration: 10000,
-  //     });
-  //   }
-  //   if (errorMessage) {
-  //     toast.error("Uh oh... Something went wrong!", {
-  //       description: errorMessage,
-  //       duration: 10000,
-  //     });
-  //   }
-  //   setShowQR(false);
-  //   // eslint-disable-next-line react-hooks/exhaustive-deps
-  // }, [searchParams]);
-
-  const generateVenmoLink = (total: number, name: string) => {
-    const venmoUsername = "Chloe_Vo";
-    const note = `Food order for ${name}`;
+  const generateVenmoLink = (
+    total: number,
+    name: string,
+    email: string,
+    phone: string
+  ) => {
+    const venmoUsername = "Jun-Yaung";
+    const note = `2025 ASDA Fundraiser: Order for ${name}, email: ${email}, phone: ${phone}`;
     const encodedNote = encodeURIComponent(note);
     return `https://venmo.com/${venmoUsername}?amount=${total}&note=${encodedNote}`;
   };
@@ -113,18 +91,22 @@ export default function OrderForm() {
     setValue("phone", formattedPhone);
   };
 
-  const onContinueClicked = (clientName: string) => {
+  const onContinueClicked = (
+    clientName: string,
+    clientEmail: string,
+    phone: string
+  ) => {
     if (total > 0) {
-      const encodedVenmoUrl = generateVenmoLink(total, clientName);
+      const encodedVenmoUrl = generateVenmoLink(
+        total,
+        clientName,
+        clientEmail,
+        phone
+      );
       console.log(encodedVenmoUrl);
       setVenmoUrl(encodedVenmoUrl);
       setShowQR(true);
     }
-  };
-
-  const handlePaymentComplete = (success: boolean) => {
-    router.push(`/?payment=${success ? "success" : "failed"}`);
-    setShowQR(false);
   };
 
   return (
@@ -135,27 +117,7 @@ export default function OrderForm() {
       <Image src={HeaderImage} alt="Header" className="rounded-lg" />
       <Form {...form}>
         <form action={addEntry} className="space-y-6">
-          <Card id="payment" className={`${showQR ? "" : "hidden"}`}>
-            <CardHeader>
-              <CardTitle>Scan to Pay with Venmo</CardTitle>
-            </CardHeader>
-            <CardContent className="flex flex-col items-center space-y-4">
-              <Link href={venmoUrl}>
-                <QRCodeSVG value={venmoUrl} size={256} />
-              </Link>
-              <div className="space-x-4">
-                <Button type="submit" variant="outline">
-                  Payment Completed
-                </Button>
-                <Button
-                  onClick={() => handlePaymentComplete(false)}
-                  variant="destructive"
-                >
-                  Cancel Payment
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+          <QRCodeSection showQR={showQR} setShowQR={setShowQR} url={venmoUrl} />
           <div className={`${showQR ? "hidden" : ""} space-y-6`}>
             <FormField
               control={form.control}
@@ -240,7 +202,13 @@ export default function OrderForm() {
 
               <Button
                 type="button"
-                onClick={() => onContinueClicked(form.getValues("name"))}
+                onClick={() =>
+                  onContinueClicked(
+                    form.getValues("name"),
+                    form.getValues("email"),
+                    form.getValues("phone")
+                  )
+                }
                 disabled={total === 0 || !form.formState.isValid}
               >
                 Continue to Payment

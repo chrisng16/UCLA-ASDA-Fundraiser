@@ -48,10 +48,10 @@ export const addEntry = async (formData: FormData) => {
             }
         })
         console.log(res)
-        redirectPath = encodeUrl("/", "success", "Your order was received! A confirmation email will be sent to your email as soon as we veried your payment.")
+        redirectPath = encodeUrl("/", "success", "Your order has been received! A confirmation email will be sent to you as soon as we verify your payment.")
     } catch (e: unknown) {
         console.error(e)
-        redirectPath = encodeUrl("/", "error", `Something went wrong... We could not process your order. Please try again later or notify admin at nguyen.nguyen@nSquare.dev. Thank you for understanding!`)
+        redirectPath = encodeUrl("/", "error", "Something went wrong… We couldn't process your order. Please try again later or contact our admin at nguyen.nguyen@nSquare.dev. Thank you for your understanding!")
     } finally {
         redirect(redirectPath)
     }
