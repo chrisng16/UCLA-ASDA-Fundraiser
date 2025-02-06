@@ -1,101 +1,253 @@
+"use client";
+import { useEffect, useState } from "react";
+import { useForm, UseFormSetValue } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { QRCodeSVG } from "qrcode.react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import Link from "next/link";
+import { addEntry } from "@/lib/actions";
+import { formatPhoneNumber } from "@/lib/utils";
 import Image from "next/image";
+import HeaderImage from "../public/unknown.png";
+import { toast } from "sonner";
 
-export default function Home() {
+const PRICES = {
+  cheeseRoll: 4.0,
+  potatoBall: 4.0,
+  chickenEmpanada: 4.0,
+  guavaStrudel: 4.0,
+};
+type FormValues = z.infer<typeof formSchema>;
+
+const formSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  email: z.string().email("Invalid email address"),
+  phone: z.string().min(1, "Phone is required"),
+  cheeseRoll: z.number().min(0, "Must be 0 or more"),
+  potatoBall: z.number().min(0, "Must be 0 or more"),
+  chickenEmpanada: z.number().min(0, "Must be 0 or more"),
+  guavaStrudel: z.number().min(0, "Must be 0 or more"),
+});
+
+export default function OrderForm() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [total, setTotal] = useState(0);
+  const [venmoUrl, setVenmoUrl] = useState("");
+  const [showQR, setShowQR] = useState(false);
+
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      name: "",
+      email: "",
+      phone: "",
+      cheeseRoll: 0,
+      potatoBall: 0,
+      chickenEmpanada: 0,
+      guavaStrudel: 0,
+    },
+    mode: "onBlur",
+  });
+
+  const watchValues = form.watch();
+
+  useEffect(() => {
+    const calculateTotal = () => {
+      return (
+        watchValues.cheeseRoll * PRICES.cheeseRoll +
+        watchValues.potatoBall * PRICES.potatoBall +
+        watchValues.chickenEmpanada * PRICES.chickenEmpanada +
+        watchValues.guavaStrudel * PRICES.guavaStrudel
+      );
+    };
+    setTotal(calculateTotal());
+  }, [watchValues]);
+
+  useEffect(() => {
+    const successMessage = searchParams.get("success");
+    const errorMessage = searchParams.get("error");
+    console.log(successMessage);
+    console.log(errorMessage);
+    if (successMessage) {
+      toast.success("Thank you! We received your order.", {
+        description: successMessage,
+        duration: 10000,
+      });
+    }
+    if (errorMessage) {
+      toast.error("Uh oh... Something went wrong!", {
+        description: errorMessage,
+        duration: 10000,
+      });
+    }
+    setShowQR(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
+
+  const generateVenmoLink = (total: number, name: string) => {
+    const venmoUsername = "Chloe_Vo";
+    const note = `Food order for ${name}`;
+    const encodedNote = encodeURIComponent(note);
+    return `https://venmo.com/${venmoUsername}?amount=${total}&note=${encodedNote}`;
+  };
+
+  const handlePhoneChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    setValue: UseFormSetValue<FormValues>
+  ) => {
+    const formattedPhone = formatPhoneNumber(e.target.value);
+    setValue("phone", formattedPhone);
+  };
+
+  const onContinueClicked = (clientName: string) => {
+    if (total > 0) {
+      const encodedVenmoUrl = generateVenmoLink(total, clientName);
+      console.log(encodedVenmoUrl);
+      setVenmoUrl(encodedVenmoUrl);
+      setShowQR(true);
+    }
+  };
+
+  const handlePaymentComplete = (success: boolean) => {
+    router.push(`/?payment=${success ? "success" : "failed"}`);
+    setShowQR(false);
+  };
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+    <div className="max-w-2xl mx-auto p-4 space-y-6">
+      <Image src={HeaderImage} alt="Header" className="rounded-lg" />
+      <Form {...form}>
+        <form action={addEntry} className="space-y-6">
+          {showQR ? (
+            <Card id="payment">
+              <CardHeader>
+                <CardTitle>Scan to Pay with Venmo</CardTitle>
+              </CardHeader>
+              <CardContent className="flex flex-col items-center space-y-4">
+                <Link href={venmoUrl}>
+                  <QRCodeSVG value={venmoUrl} size={256} />
+                </Link>
+                <div className="space-x-4">
+                  <Button type="submit" variant="outline">
+                    Payment Completed
+                  </Button>
+                  <Button
+                    onClick={() => handlePaymentComplete(false)}
+                    variant="destructive"
+                  >
+                    Cancel Payment
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-6">
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Name</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input type="email" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="phone"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Phone</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        type="text"
+                        placeholder="xxx-xxx-xxxx"
+                        maxLength={12}
+                        value={field.value}
+                        onChange={(e) => handlePhoneChange(e, form.setValue)} // Handle the phone number input change
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="grid sm:grid-cols-2 gap-4">
+                {Object.keys(PRICES).map((item) => (
+                  <FormField
+                    key={item}
+                    control={form.control}
+                    name={item as keyof typeof PRICES}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="capitalize">
+                          {item.replace(/([A-Z])/g, " $1")} ($
+                          {PRICES[item as keyof typeof PRICES]})
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            min="0"
+                            {...field}
+                            onChange={(e) =>
+                              field.onChange(parseInt(e.target.value) || 0)
+                            }
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                ))}
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="text-xl font-bold">
+                  Total: ${total.toFixed(2)}
+                </div>
+
+                <Button
+                  type="button"
+                  onClick={() => onContinueClicked(form.getValues("name"))}
+                  disabled={total === 0 || !form.formState.isValid}
+                >
+                  Continue to Payment
+                </Button>
+              </div>
+            </div>
+          )}
+        </form>
+      </Form>
     </div>
   );
 }
