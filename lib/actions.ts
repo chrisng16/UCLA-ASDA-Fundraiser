@@ -39,11 +39,11 @@ export const addEntry = async (formData: FormData) => {
 
         await sheets.spreadsheets.values.append({
             spreadsheetId: process.env.SHEET_ID,
-            range: 'A1:I1',
+            range: 'Orders!A1:J1',
             valueInputOption: 'USER_ENTERED',
             requestBody: {
                 values: [
-                    [name, email, phone, cheeseRoll, potatoBall, guavaStrudel, chickenEmpanada, sum([cheeseRoll, potatoBall, guavaStrudel, chickenEmpanada]) * 4, 'pending']
+                    [name, email, phone, cheeseRoll, potatoBall, guavaStrudel, chickenEmpanada, sum([cheeseRoll, potatoBall, guavaStrudel, chickenEmpanada]) * 4, false, 'pending']
                 ]
             }
         })

@@ -1,0 +1,14 @@
+{
+  "functions": {
+    "api/check-payments": {
+      "runtime": "nodejs18.x",
+      "memory": 512
+    }
+  },
+  "crons": [
+    {
+      "path": "/api/check-payments",
+      "schedule": "* * * * *"
+    }
+  ]
+}
