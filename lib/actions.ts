@@ -37,7 +37,7 @@ export const addEntry = async (formData: FormData) => {
             auth, version: 'v4',
         })
 
-        const res = await sheets.spreadsheets.values.append({
+        await sheets.spreadsheets.values.append({
             spreadsheetId: process.env.SHEET_ID,
             range: 'A1:I1',
             valueInputOption: 'USER_ENTERED',
@@ -47,7 +47,6 @@ export const addEntry = async (formData: FormData) => {
                 ]
             }
         })
-        console.log(res)
         redirectPath = encodeUrl("/", "success", "Your order has been received! A confirmation email will be sent to you as soon as we verify your payment.")
     } catch (e: unknown) {
         console.error(e)
