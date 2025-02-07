@@ -22,6 +22,7 @@ export async function POST() {
             year: 'numeric',
             month: 'numeric',
             day: 'numeric',
+            timeZone: 'America/Los_Angeles',
         });
 
         const response = await sheets.spreadsheets.values.get({
