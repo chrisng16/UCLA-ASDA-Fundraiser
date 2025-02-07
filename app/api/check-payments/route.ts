@@ -12,17 +12,14 @@ export async function GET() {
             scopes: [
                 "https://www.googleapis.com/auth/drive.file", "https://www.googleapis.com/auth/drive", "https://www.googleapis.com/auth/spreadsheets"
             ]
-        })
+        });
 
-        const sheets = google.sheets({
-            auth, version: 'v4',
-        })
+        const sheets = google.sheets({ auth, version: 'v4' });
         const spreadsheetId = process.env.SHEET_ID;
         const sheetName = 'Orders';
 
         if (!spreadsheetId) throw new Error('Spreadsheet ID is not defined');
 
-        // Fetch payment status and confirmation email columns (assuming columns: A = email, B = name, C = isPaid, D = isConfirmationEmailSent)
         const response = await sheets.spreadsheets.values.get({
             spreadsheetId,
             range: `${sheetName}!A2:J`,
@@ -33,19 +30,29 @@ export async function GET() {
 
         for (let i = 0; i < rows.length; i++) {
             const [name, email, , cheeseRoll, potatoBall, guavaStrudel, chickenEmpanada, , isConfirmationEmailSent, paymentStatus] = rows[i];
-
-            if (paymentStatus === 'paid' && isConfirmationEmailSent !== 'true') {
-                emailsToNotify.push({ email, name, cheeseRoll, potatoBall, guavaStrudel, chickenEmpanada, rowIndex: i + 2 }); // Data starts from row 2
+            if (paymentStatus === 'paid' && (isConfirmationEmailSent as string).toLowerCase() !== 'true') {
+                emailsToNotify.push({
+                    email,
+                    name,
+                    cheeseRoll: cheeseRoll || '0',
+                    potatoBall: potatoBall || '0',
+                    guavaStrudel: guavaStrudel || '0',
+                    chickenEmpanada: chickenEmpanada || '0',
+                    rowIndex: i + 2
+                });
             }
         }
 
         if (emailsToNotify.length > 0) {
             await sendEmails(emailsToNotify, sheets, spreadsheetId, sheetName);
+            console.log("Emails sent and sheet updated");
+            return NextResponse.json({ success: true, message: 'Emails sent and sheet updated successfully' });
+        } else {
+            return NextResponse.json({ success: true, message: 'No emails to send' });
         }
 
-        return NextResponse.json({ success: true, message: 'Check completed' });
     } catch (error: unknown) {
-        console.error('Error checking Google Sheet:', error);
+        console.error('Error processing request:', error);
         return NextResponse.json(
             { success: false, error: error instanceof Error ? error.message : 'Unknown error' },
             { status: 500 }
@@ -53,64 +60,51 @@ export async function GET() {
     }
 }
 
-async function sendEmails(users: {
-    email: string; name: string, cheeseRoll: string;
-    potatoBall: string;
-    guavaStrudel: string;
-    chickenEmpanada: string;
-    rowIndex: number;
-}[], sheets: sheets_v4.Sheets,
+async function sendEmails(
+    users: { email: string; name: string; cheeseRoll: string; potatoBall: string; guavaStrudel: string; chickenEmpanada: string; rowIndex: number }[],
+    sheets: sheets_v4.Sheets,
     spreadsheetId: string,
-    sheetName: string,) {
-    const { MAIL_HOST, MAIL_PORT, MAIL_USER, MAIL_PASS } = process.env;
+    sheetName: string
+) {
     const transporter = nodemailer.createTransport({
-        host: MAIL_HOST,
-        port: Number(MAIL_PORT),
+        host: process.env.MAIL_HOST,
+        port: Number(process.env.MAIL_PORT),
         secure: true,
         auth: {
-            user: MAIL_USER,
-            pass: MAIL_PASS
+            user: process.env.MAIL_USER,
+            pass: process.env.MAIL_PASS
         },
     });
 
-    const transporterVerified = await transporter.verify()
-    if (!transporterVerified) {
-        return NextResponse.json({
-            message: 'Fail to verify transporter'
-        }, { status: 500 })
+    try {
+        await transporter.verify();
+    } catch (error) {
+        console.error('Failed to verify transporter:', error);
+        throw new Error('Failed to verify email transporter');
     }
 
-
     for (const user of users) {
-        const mailOptions = {
-            from: process.env.EMAIL_USER,
-            to: user.email,
-            subject: '2025 ASDA Philanthropy Fundraiser: Payment Confirmed!',
-            text: `Hello ${user.name},\n\n
-            Thank you for your order! Your payment has been confirmed.\n\n
-            Order Details:\n
-            - ${user.cheeseRoll || `- Cheese Roll(s): ${user.cheeseRoll}`}\n
-            - ${user.potatoBall || `- Potato Ball(s): ${user.potatoBall}`}\n
-            - ${user.chickenEmpanada || `- Chicken Empanadas(s): ${user.chickenEmpanada}`}\n
-            - ${user.guavaStrudel || `- Guava & Cheese Strudel(s): ${user.guavaStrudel}`}\n\n
-            Event Info:\n
-            When: Monday, March 3rd, 2025 at Lunch\n
-            Where: In the Courtyard\n\n
-
-            We are excited to see you soon!\n\n
-          
-            Best regards,\n
-            UCLA ASDA Philanthropy.`,
-        };
         try {
-            await transporter.sendMail(mailOptions);
-        } catch {
-            return NextResponse.json({
-                message: 'Failed to send one or more emails'
-            }, { status: 500 })
-        }
+            const mailOptions = {
+                from: `No Reply <${process.env.MAIL_USER}>`,
+                to: user.email,
+                subject: '2025 ASDA Philanthropy Fundraiser: Payment Confirmed!',
+                text: `Hello ${user.name},\n\nThank you for your order! Your payment has been confirmed.\n\nOrder Details:\n` +
+                    `${user.cheeseRoll !== '0' ? `- Cheese Roll(s): ${user.cheeseRoll}\n` : ''}` +
+                    `${user.potatoBall !== '0' ? `- Potato Ball(s): ${user.potatoBall}\n` : ''}` +
+                    `${user.chickenEmpanada !== '0' ? `- Chicken Empanada(s): ${user.chickenEmpanada}\n` : ''}` +
+                    `${user.guavaStrudel !== '0' ? `- Guava & Cheese Strudel(s): ${user.guavaStrudel}\n` : ''}\n` +
+                    `Event Info:\nWhen: Monday, March 3rd, 2025 at Lunch\nWhere: In the Courtyard\n\n` +
+                    `We are excited to see you soon!\n\nBest regards,\nUCLA ASDA Philanthropy.`
+            };
 
-        await updateSheet(sheets, spreadsheetId, sheetName, user.rowIndex);
+            await transporter.sendMail(mailOptions);
+            await updateSheet(sheets, spreadsheetId, sheetName, user.rowIndex);
+            console.log(`Email sent and sheet updated for ${user.email}`);
+        } catch (error) {
+            console.error(`Failed to process user ${user.email}:`, error);
+            throw new Error(`Failed to send email or update sheet for ${user.email}`);
+        }
     }
 }
 
@@ -120,23 +114,16 @@ async function updateSheet(
     sheetName: string,
     rowIndex: number
 ) {
-
     const range = `${sheetName}!I${rowIndex}`;
-    const values = [['true']];
     try {
-
         await sheets.spreadsheets.values.update({
             spreadsheetId,
-            range: range,
+            range,
             valueInputOption: 'RAW',
-            requestBody: { values },
+            requestBody: { values: [['true']] },
         });
-        return NextResponse.json({ success: true, message: 'Email Sent. Sheet Updated.' });
-    } catch (error: unknown) {
-        console.error('Error checking Google Sheet:', error);
-        return NextResponse.json(
-            { success: false, error: error instanceof Error ? error.message : 'Unknown error' },
-            { status: 500 }
-        );
+    } catch (error) {
+        console.error('Error updating sheet:', error);
+        throw new Error('Failed to update Google Sheet');
     }
 }
