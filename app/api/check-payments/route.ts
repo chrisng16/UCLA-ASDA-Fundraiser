@@ -22,14 +22,14 @@ export async function GET() {
 
         const response = await sheets.spreadsheets.values.get({
             spreadsheetId,
-            range: `${sheetName}!A2:J`,
+            range: `${sheetName}!A2:K`,
         });
 
         const rows = response.data.values || [];
-        const emailsToNotify: { email: string; name: string; cheeseRoll: string; potatoBall: string; guavaStrudel: string; chickenEmpanada: string; rowIndex: number }[] = [];
+        const emailsToNotify: { email: string; name: string; cheeseRoll: string; potatoBall: string; guavaStrudel: string; chickenEmpanada: string; orderId: string; rowIndex: number }[] = [];
 
         for (let i = 0; i < rows.length; i++) {
-            const [name, email, , cheeseRoll, potatoBall, guavaStrudel, chickenEmpanada, , isConfirmationEmailSent, paymentStatus] = rows[i];
+            const [name, email, , cheeseRoll, potatoBall, guavaStrudel, chickenEmpanada, , isConfirmationEmailSent, paymentStatus, orderId] = rows[i];
             if (paymentStatus === 'paid' && (isConfirmationEmailSent as string).toLowerCase() !== 'true') {
                 emailsToNotify.push({
                     email,
@@ -38,6 +38,7 @@ export async function GET() {
                     potatoBall: potatoBall || '0',
                     guavaStrudel: guavaStrudel || '0',
                     chickenEmpanada: chickenEmpanada || '0',
+                    orderId,
                     rowIndex: i + 2
                 });
             }
@@ -61,7 +62,7 @@ export async function GET() {
 }
 
 async function sendEmails(
-    users: { email: string; name: string; cheeseRoll: string; potatoBall: string; guavaStrudel: string; chickenEmpanada: string; rowIndex: number }[],
+    users: { email: string; name: string; cheeseRoll: string; potatoBall: string; guavaStrudel: string; chickenEmpanada: string; orderId: string; rowIndex: number }[],
     sheets: sheets_v4.Sheets,
     spreadsheetId: string,
     sheetName: string
@@ -89,7 +90,7 @@ async function sendEmails(
                 from: `No Reply <${process.env.MAIL_USER}>`,
                 to: user.email,
                 subject: '2025 ASDA Philanthropy Fundraiser: Payment Confirmed!',
-                text: `Hello ${user.name},\n\nThank you for your order! Your payment has been confirmed.\n\nOrder Details:\n` +
+                text: `Hello ${user.name},\n\nThank you for your order! Your payment has been confirmed.\n\nOrder Details:\nOrder ID: ${user.orderId}` +
                     `${user.cheeseRoll !== '0' ? `- Cheese Roll(s): ${user.cheeseRoll}\n` : ''}` +
                     `${user.potatoBall !== '0' ? `- Potato Ball(s): ${user.potatoBall}\n` : ''}` +
                     `${user.chickenEmpanada !== '0' ? `- Chicken Empanada(s): ${user.chickenEmpanada}\n` : ''}` +

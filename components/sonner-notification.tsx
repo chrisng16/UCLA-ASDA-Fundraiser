@@ -11,8 +11,7 @@ const SonnerNotification = ({
   useEffect(() => {
     const successMessage = searchParams.get("success");
     const errorMessage = searchParams.get("error");
-    console.log(successMessage);
-    console.log(errorMessage);
+
     if (successMessage) {
       toast.success("Thank you! We received your order.", {
         description: successMessage,

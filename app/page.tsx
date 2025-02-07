@@ -1,5 +1,5 @@
 "use client";
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useState, useTransition } from "react";
 import { useForm, UseFormSetValue } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -24,7 +25,7 @@ const PRICES = {
   cheeseRoll: 4.0,
   potatoBall: 4.0,
   chickenEmpanada: 4.0,
-  guavaStrudel: 4.0,
+  guavaAndCheeseStrudel: 4.0,
 };
 type FormValues = z.infer<typeof formSchema>;
 
@@ -35,13 +36,14 @@ const formSchema = z.object({
   cheeseRoll: z.number().min(0, "Must be 0 or more"),
   potatoBall: z.number().min(0, "Must be 0 or more"),
   chickenEmpanada: z.number().min(0, "Must be 0 or more"),
-  guavaStrudel: z.number().min(0, "Must be 0 or more"),
+  guavaAndCheeseStrudel: z.number().min(0, "Must be 0 or more"),
 });
 
 export default function OrderForm() {
   const [total, setTotal] = useState(0);
   const [venmoUrl, setVenmoUrl] = useState("");
   const [showQR, setShowQR] = useState(false);
+  const [isPending, startTransition] = useTransition();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -52,7 +54,7 @@ export default function OrderForm() {
       cheeseRoll: 0,
       potatoBall: 0,
       chickenEmpanada: 0,
-      guavaStrudel: 0,
+      guavaAndCheeseStrudel: 0,
     },
     mode: "onBlur",
   });
@@ -65,7 +67,7 @@ export default function OrderForm() {
         watchValues.cheeseRoll * PRICES.cheeseRoll +
         watchValues.potatoBall * PRICES.potatoBall +
         watchValues.chickenEmpanada * PRICES.chickenEmpanada +
-        watchValues.guavaStrudel * PRICES.guavaStrudel
+        watchValues.guavaAndCheeseStrudel * PRICES.guavaAndCheeseStrudel
       );
     };
     setTotal(calculateTotal());
@@ -116,8 +118,21 @@ export default function OrderForm() {
       </Suspense>
       <Image src={HeaderImage} alt="Header" className="rounded-lg" />
       <Form {...form}>
-        <form action={addEntry} className="space-y-6">
-          <QRCodeSection showQR={showQR} setShowQR={setShowQR} url={venmoUrl} />
+        <form
+          action={async (formData) => {
+            startTransition(async () => {
+              await addEntry(formData);
+            });
+          }}
+          className="space-y-6"
+        >
+          {form.formState.isSubmitting}
+          <QRCodeSection
+            disabled={isPending}
+            showQR={showQR}
+            setShowQR={setShowQR}
+            url={venmoUrl}
+          />
           <div className={`${showQR ? "hidden" : ""} space-y-6`}>
             <FormField
               control={form.control}
@@ -126,7 +141,7 @@ export default function OrderForm() {
                 <FormItem>
                   <FormLabel>Name</FormLabel>
                   <FormControl>
-                    <Input {...field} />
+                    <Input {...field} placeholder="Harry Potter" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -140,8 +155,16 @@ export default function OrderForm() {
                 <FormItem>
                   <FormLabel>Email</FormLabel>
                   <FormControl>
-                    <Input type="email" {...field} />
+                    <Input
+                      type="email"
+                      {...field}
+                      placeholder="harry.potter@hogwarts.edu"
+                    />
                   </FormControl>
+                  <FormDescription>
+                    A confirmation email will be sent to this email. Please use
+                    an active email!
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}

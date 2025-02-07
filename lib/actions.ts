@@ -2,6 +2,8 @@
 import { google } from 'googleapis'
 import { encodeUrl } from './utils'
 import { redirect } from 'next/navigation'
+import { customAlphabet } from 'nanoid'
+const nanoid = customAlphabet('1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ', 6)
 
 const strToNumber = (str: string | undefined) => {
     return str ? +str : 0
@@ -20,6 +22,7 @@ export const addEntry = async (formData: FormData) => {
     const potatoBall = strToNumber(formData.get("potatoBall")?.toString())
     const guavaStrudel = strToNumber(formData.get("guavaStrudel")?.toString())
     const chickenEmpanada = strToNumber(formData.get("chickenEmpanada")?.toString())
+    const orderNumber = nanoid()
     let redirectPath: string = ''
     try {
 
@@ -39,11 +42,11 @@ export const addEntry = async (formData: FormData) => {
 
         await sheets.spreadsheets.values.append({
             spreadsheetId: process.env.SHEET_ID,
-            range: 'Orders!A1:J1',
+            range: 'Orders!A1:K1',
             valueInputOption: 'USER_ENTERED',
             requestBody: {
                 values: [
-                    [name, email, phone, cheeseRoll, potatoBall, guavaStrudel, chickenEmpanada, sum([cheeseRoll, potatoBall, guavaStrudel, chickenEmpanada]) * 4, "false", 'pending']
+                    [name, email, phone, cheeseRoll, potatoBall, guavaStrudel, chickenEmpanada, sum([cheeseRoll, potatoBall, guavaStrudel, chickenEmpanada]) * 4, "false", 'pending', orderNumber]
                 ]
             }
         })

@@ -9,17 +9,20 @@ import {
   CardContent,
   CardDescription,
 } from "./ui/card";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, Loader2 } from "lucide-react";
 
 const QRCodeSection = ({
   showQR,
   setShowQR,
   url,
+  disabled,
 }: {
   showQR: boolean;
   setShowQR: Dispatch<SetStateAction<boolean>>;
   url: string;
+  disabled: boolean;
 }) => {
+  console.log(disabled);
   return (
     <Card id="payment" className={`${showQR ? "flex flex-col" : "hidden"}`}>
       <CardHeader>
@@ -27,9 +30,9 @@ const QRCodeSection = ({
           <Button
             onClick={() => setShowQR(false)}
             type="button"
-            variant="ghost"
+            variant="secondary"
             size="sm"
-            className="px-0 flex items-center justify-start"
+            className="px-4 flex items-center justify-start w-fit"
           >
             <ChevronLeft />
             <span className="hidden sm:block">Go Back</span>
@@ -66,8 +69,14 @@ const QRCodeSection = ({
             <span className="font-normal">(818) 661-0309</span>
           </div>
         </div>
-        <div className="space-x-4">
-          <Button type="submit">Payment Completed</Button>
+        <div className="space-x-4 flex w-full justify-center">
+          <Button type="submit" disabled={disabled} className="w-full sm:w-3/4">
+            {disabled ? (
+              <Loader2 className="animate-spin" />
+            ) : (
+              "Payment Completed"
+            )}
+          </Button>
         </div>
       </CardContent>
     </Card>
