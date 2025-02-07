@@ -41,7 +41,6 @@ export async function GET() {
 
         if (emailsToNotify.length > 0) {
             await sendEmails(emailsToNotify, sheets, spreadsheetId, sheetName);
-            // await updateSheet(sheets, spreadsheetId, sheetName, emailsToNotify);
         }
 
         return NextResponse.json({ success: true, message: 'Check completed' });
@@ -74,6 +73,14 @@ async function sendEmails(users: {
         },
     });
 
+    const transporterVerified = await transporter.verify()
+    if (!transporterVerified) {
+        return NextResponse.json({
+            message: 'Fail to verify transporter'
+        }, { status: 500 })
+    }
+
+
     for (const user of users) {
         const mailOptions = {
             from: process.env.EMAIL_USER,
@@ -95,11 +102,15 @@ async function sendEmails(users: {
             Best regards,\n
             UCLA ASDA Philanthropy.`,
         };
-
-        const res = await transporter.sendMail(mailOptions);
-        if (res) {
-            await updateSheet(sheets, spreadsheetId, sheetName, user.rowIndex);
+        try {
+            await transporter.sendMail(mailOptions);
+        } catch {
+            return NextResponse.json({
+                message: 'Failed to send one or more emails'
+            }, { status: 500 })
         }
+
+        await updateSheet(sheets, spreadsheetId, sheetName, user.rowIndex);
     }
 }
 
@@ -112,11 +123,20 @@ async function updateSheet(
 
     const range = `${sheetName}!I${rowIndex}`;
     const values = [['true']];
+    try {
 
-    await sheets.spreadsheets.values.update({
-        spreadsheetId,
-        range: range,
-        valueInputOption: 'RAW',
-        requestBody: { values },
-    });
+        await sheets.spreadsheets.values.update({
+            spreadsheetId,
+            range: range,
+            valueInputOption: 'RAW',
+            requestBody: { values },
+        });
+        return NextResponse.json({ success: true, message: 'Email Sent. Sheet Updated.' });
+    } catch (error: unknown) {
+        console.error('Error checking Google Sheet:', error);
+        return NextResponse.json(
+            { success: false, error: error instanceof Error ? error.message : 'Unknown error' },
+            { status: 500 }
+        );
+    }
 }

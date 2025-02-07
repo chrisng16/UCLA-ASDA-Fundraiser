@@ -43,7 +43,7 @@ export const addEntry = async (formData: FormData) => {
             valueInputOption: 'USER_ENTERED',
             requestBody: {
                 values: [
-                    [name, email, phone, cheeseRoll, potatoBall, guavaStrudel, chickenEmpanada, sum([cheeseRoll, potatoBall, guavaStrudel, chickenEmpanada]) * 4, false, 'pending']
+                    [name, email, phone, cheeseRoll, potatoBall, guavaStrudel, chickenEmpanada, sum([cheeseRoll, potatoBall, guavaStrudel, chickenEmpanada]) * 4, "false", 'pending']
                 ]
             }
         })
