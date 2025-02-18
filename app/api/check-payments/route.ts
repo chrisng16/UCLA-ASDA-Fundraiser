@@ -1,5 +1,5 @@
-import { NextResponse } from 'next/server';
 import { google, sheets_v4 } from 'googleapis';
+import { NextResponse } from 'next/server';
 import nodemailer from 'nodemailer';
 
 export async function GET() {
@@ -90,7 +90,7 @@ async function sendEmails(
                 from: `No Reply <${process.env.MAIL_USER}>`,
                 to: user.email,
                 subject: '2025 ASDA Philanthropy Fundraiser: Payment Confirmed!',
-                text: `Hello ${user.name},\n\nThank you for your order! Your payment has been confirmed.\n\nOrder Details:\nOrder ID: ${user.orderId}` +
+                text: `Hello ${user.name},\n\nThank you for your order! Your payment has been confirmed.\n\nOrder Details:\nOrder ID: ${user.orderId}\n\n` +
                     `${user.cheeseRoll !== '0' ? `- Cheese Roll(s): ${user.cheeseRoll}\n` : ''}` +
                     `${user.potatoBall !== '0' ? `- Potato Ball(s): ${user.potatoBall}\n` : ''}` +
                     `${user.chickenEmpanada !== '0' ? `- Chicken Empanada(s): ${user.chickenEmpanada}\n` : ''}` +
