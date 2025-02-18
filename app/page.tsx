@@ -25,7 +25,7 @@ const PRICES = {
   cheeseRoll: 4.0,
   potatoBall: 4.0,
   chickenEmpanada: 4.0,
-  guavaAndCheeseStrudel: 4.0,
+  guavaStrudel: 4.0,
 };
 type FormValues = z.infer<typeof formSchema>;
 
@@ -36,7 +36,7 @@ const formSchema = z.object({
   cheeseRoll: z.number().min(0, "Must be 0 or more"),
   potatoBall: z.number().min(0, "Must be 0 or more"),
   chickenEmpanada: z.number().min(0, "Must be 0 or more"),
-  guavaAndCheeseStrudel: z.number().min(0, "Must be 0 or more"),
+  guavaStrudel: z.number().min(0, "Must be 0 or more"),
 });
 
 export default function OrderForm() {
@@ -54,7 +54,7 @@ export default function OrderForm() {
       cheeseRoll: 0,
       potatoBall: 0,
       chickenEmpanada: 0,
-      guavaAndCheeseStrudel: 0,
+      guavaStrudel: 0,
     },
     mode: "onBlur",
   });
@@ -67,7 +67,7 @@ export default function OrderForm() {
         watchValues.cheeseRoll * PRICES.cheeseRoll +
         watchValues.potatoBall * PRICES.potatoBall +
         watchValues.chickenEmpanada * PRICES.chickenEmpanada +
-        watchValues.guavaAndCheeseStrudel * PRICES.guavaAndCheeseStrudel
+        watchValues.guavaStrudel * PRICES.guavaStrudel
       );
     };
     setTotal(calculateTotal());
