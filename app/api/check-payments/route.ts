@@ -46,7 +46,7 @@ export async function GET() {
 
         if (emailsToNotify.length > 0) {
             await sendEmails(emailsToNotify, sheets, spreadsheetId, sheetName);
-            console.log("Emails sent and sheet updated");
+            // console.log("Emails sent and sheet updated");
             return NextResponse.json({ success: true, message: 'Emails sent and sheet updated successfully' });
         } else {
             return NextResponse.json({ success: true, message: 'No emails to send' });
@@ -101,7 +101,7 @@ async function sendEmails(
 
             await transporter.sendMail(mailOptions);
             await updateSheet(sheets, spreadsheetId, sheetName, user.rowIndex);
-            console.log(`Email sent and sheet updated for ${user.email}`);
+            // console.log(`Email sent and sheet updated for ${user.email}`);
         } catch (error) {
             console.error(`Failed to process user ${user.email}:`, error);
             throw new Error(`Failed to send email or update sheet for ${user.email}`);

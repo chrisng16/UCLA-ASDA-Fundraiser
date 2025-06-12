@@ -1,15 +1,15 @@
+import { ChevronLeft, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { QRCodeSVG } from "qrcode.react";
-import React, { Dispatch, SetStateAction } from "react";
+import { Dispatch, SetStateAction } from "react";
 import { Button } from "./ui/button";
 import {
   Card,
-  CardHeader,
-  CardTitle,
   CardContent,
   CardDescription,
+  CardHeader,
+  CardTitle,
 } from "./ui/card";
-import { ChevronLeft, Loader2 } from "lucide-react";
 
 const QRCodeSection = ({
   showQR,
@@ -22,7 +22,7 @@ const QRCodeSection = ({
   url: string;
   disabled: boolean;
 }) => {
-  console.log(disabled);
+
   return (
     <Card id="payment" className={`${showQR ? "flex flex-col" : "hidden"}`}>
       <CardHeader>

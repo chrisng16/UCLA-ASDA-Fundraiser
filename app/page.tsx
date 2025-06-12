@@ -132,23 +132,23 @@ export default function OrderForm() {
                 <SonnerNotification setShowQR={setShowQR} />
             </Suspense>
             <Image src={HeaderImage} alt="Header" className="rounded-lg" />
-            <Dialog open>
+            <Dialog defaultOpen={!isDisabled}>
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle className="text-2xl">
-                            Order Dealine Passed
+                            Order Deadline Has Passed
                         </DialogTitle>
                         <DialogDescription className="sr-only">
-                            Thank you for your interest! Unfortunately, the
-                            deadline for this event pre-order has passed. We
-                            appreciate your support and hope to see you next
-                            time!
+                            This dialog informs you that the order deadline has passed and no further orders can be placed at this time.
                         </DialogDescription>
                     </DialogHeader>
-                    <span className="text-xl font-semibold">
+                    <span className="text-xl text-balance">
                         Thank you for your interest! Unfortunately, the deadline
-                        for this event pre-order has passed. We appreciate your
+                        for this event pre-order (March 1st, 2025) has passed. We appreciate your
                         support and hope to see you next time!
+                    </span>
+                    <span className="text-pretty text-destructive font-medium">
+                        <span className="underline underline-offset-2 font-semibold">DISCLAIMER:</span> This page is now for demonstration purposes <span className="underline underline-offset-2 font-semibold">ONLY</span> and does <span className="underline underline-offset-2 font-semibold">NOT</span> accept any orders.
                     </span>
                 </DialogContent>
             </Dialog>
@@ -163,7 +163,7 @@ export default function OrderForm() {
                 >
                     {form.formState.isSubmitting}
                     <QRCodeSection
-                        disabled={isPending || isDisabled}
+                        disabled={isPending}
                         showQR={showQR}
                         setShowQR={setShowQR}
                         url={venmoUrl}
@@ -179,7 +179,6 @@ export default function OrderForm() {
                                         <Input
                                             {...field}
                                             placeholder="Harry Potter"
-                                            disabled={isDisabled}
                                         />
                                     </FormControl>
                                     <FormMessage />
@@ -197,7 +196,6 @@ export default function OrderForm() {
                                         <Input
                                             type="email"
                                             {...field}
-                                            disabled={isDisabled}
                                             placeholder="harry.potter@hogwarts.edu"
                                         />
                                     </FormControl>
@@ -222,7 +220,6 @@ export default function OrderForm() {
                                             placeholder="xxx-xxx-xxxx"
                                             maxLength={12}
                                             value={field.value}
-                                            disabled={isDisabled}
                                             onChange={(e) =>
                                                 handlePhoneChange(
                                                     e,
@@ -252,7 +249,7 @@ export default function OrderForm() {
                                                 ($
                                                 {
                                                     PRICES[
-                                                        item as keyof typeof PRICES
+                                                    item as keyof typeof PRICES
                                                     ]
                                                 }
                                                 )
@@ -269,7 +266,6 @@ export default function OrderForm() {
                                                             ) || 0
                                                         )
                                                     }
-                                                    disabled={isDisabled}
                                                 />
                                             </FormControl>
                                             <FormMessage />
@@ -294,8 +290,7 @@ export default function OrderForm() {
                                 }
                                 disabled={
                                     total === 0 ||
-                                    !form.formState.isValid ||
-                                    isDisabled
+                                    !form.formState.isValid
                                 }
                             >
                                 Continue to Payment
