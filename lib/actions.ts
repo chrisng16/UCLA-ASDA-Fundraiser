@@ -17,7 +17,7 @@ const sum = (nums: Array<number>) => {
 export const addEntry = async (formData: FormData) => {
     const name = formData.get("name")?.toString()
     const email = formData.get("email")?.toString()
-    const phone = formData.get("phone")?.toString()
+    const phone = 'Redacted for Privacy: xxx-xxx-xxxx'
     const cheeseRoll = strToNumber(formData.get("cheeseRoll")?.toString())
     const potatoBall = strToNumber(formData.get("potatoBall")?.toString())
     const guavaStrudel = strToNumber(formData.get("guavaStrudel")?.toString())

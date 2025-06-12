@@ -87,7 +87,7 @@ export default function OrderForm() {
         email: string,
         phone: string
     ) => {
-        const venmoUsername = "Jun-Yaung";
+        const venmoUsername = "Albus-Dumbledore";
         const note = `2025 ASDA Fundraiser: Order for ${name}, email: ${email}, phone: ${phone}`;
         const encodedNote = encodeURIComponent(note);
         return `https://venmo.com/${venmoUsername}?amount=${total}&note=${encodedNote}`;

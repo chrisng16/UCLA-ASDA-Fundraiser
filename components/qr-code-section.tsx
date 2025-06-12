@@ -56,7 +56,7 @@ const QRCodeSection = ({
             <Link href={url}>
               <QRCodeSVG value={url} />
             </Link>
-            <span className="font-semibold">@Jun-Yaung</span>
+            <span className="font-semibold">@Albus-Dumbledore</span>
           </div>
 
           <span className="text-center flex justify-center items-center text-xl w-full">
@@ -64,9 +64,9 @@ const QRCodeSection = ({
           </span>
 
           <div className="sm:col-span-4 flex flex-col justify-center text-center text-balance font-semibold text-xl">
-            <h3>Zelle with the Following Information</h3>
-            <span className="font-normal">Name: Jun Yaung</span>
-            <span className="font-normal">(818) 661-0309</span>
+            <h3>Gringotts Wizarding Banking with the Following Information</h3>
+            <span className="font-normal">Name: Albus Dumbledore</span>
+            <span className="font-normal">(386) 253-3673</span>
           </div>
         </div>
         <div className="space-x-4 flex w-full justify-center">
